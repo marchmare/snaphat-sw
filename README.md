@@ -33,12 +33,12 @@ marchmare/snaphat-pcb) is used, follow the link for details.
 
 2. Clone the repository:
 
-        git clone https://github.com/marchmare/snaphat-.git
-        cd snaphat-
+    git clone https://github.com/marchmare/snaphat-sw.git
+    cd snaphat-sw
 
 3. Run the entry script:
 
-        python3 main.py
+    python3 main.py
 
 Captured frames are saved into `camera/` directory.
 
@@ -56,16 +56,16 @@ Captured frames are saved into `camera/` directory.
 | SHUTTER     | 26          | Capture photo | --- | 
 
 ## Project structure
-        .
-        ├── assets/             - PNG spritesheets used by UI
-        ├── camera/             - output directory for captured images
-        ├── core/               - core logic and settings 
-        ├── device/             - hardware drivers
-        ├── sound/              - sound generation modules
-        ├── ui/                 - UI framework
-        ├── main.py             - entry point script
-        ├── snaphat.service     - systemd auto-start service 
-        └── README.md       
+    .
+    ├── assets/             - PNG spritesheets used by UI
+    ├── camera/             - output directory for captured images
+    ├── core/               - core logic and settings 
+    ├── device/             - hardware drivers
+    ├── sound/              - sound generation modules
+    ├── ui/                 - UI framework
+    ├── main.py             - entry point script
+    ├── snaphat.service     - systemd auto-start service 
+    └── README.md       
 
 ## App configuration - `core/settings.py`
 
@@ -77,24 +77,24 @@ Some behaviour can be customized via [settings.py](core/settings.py) file. This 
 
 Run:
 
-        sudo raspi-config
+    sudo raspi-config
 
 Enable:
 
-    * I2C
-    * SPI
+* I2C
+* SPI
 
 ### `config.txt`
 
 Configure GPIO pullups for buttons:
 
-        # GPIOs
-        gpio=17,27,22,5,6,13,19,26=pu
+    # GPIOs
+    gpio=17,27,22,5,6,13,19,26=pu
 
 Configure SPI LCD overlay:
 
-        # SPI LCD
-        dtoverlay=fbtft,spi0-0,ili9341,bgr,rotate=270,cs=0,dc_pin=25,reset_pin=24,bl_pin=12
+    # SPI LCD
+    dtoverlay=fbtft,spi0-0,ili9341,bgr,rotate=270,cs=0,dc_pin=25,reset_pin=24,bl_pin=12
 
 ### `cmdline.txt`
 
@@ -103,13 +103,11 @@ Configure SPI LCD overlay:
 
 Enable silent boot with no console, enable OTG mode on RPi and speed up booting time (replace <partuid> and <reg> with values specific to your device):
 
-```
-root=PARTUUID=<partuid> rootfstype=ext4 rootwait modules-load=dwc2,g_mass_storage quiet loglevel=0 logo.nologo vt.global_cursor_default=0 splash fastboot fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
-```
+    root=PARTUUID=<partuid> rootfstype=ext4 rootwait modules-load=dwc2,g_mass_storage quiet loglevel=0 logo.nologo vt.global_cursor_default=0 splash fastboot fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
 
 To find PARTUUID:
 
-        grep ext4 /etc/fstab | grep -oP 'PARTUUID=\K[^ ]+'
+    grep ext4 /etc/fstab | grep -oP 'PARTUUID=\K[^ ]+'
 
 `<reg>` is your Wi-Fi regulatory domain.
 
@@ -117,26 +115,26 @@ To find PARTUUID:
 
 1. Update paths to SnapHAT scripts repository and username if they differ from the default in `snaphat.service` file:
 
-        User=pi 
-        WorkingDirectory=/home/pi/snaphat 
-        ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py  
+    User=pi 
+    WorkingDirectory=/home/pi/snaphat 
+    ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py  
 
 2. Copy the service file:
 
-        sudo cp snaphat.service /etc/systemd/system/
+    sudo cp snaphat.service /etc/systemd/system/
 
 3. Reload `systemd`:
 
-        sudo systemctl daemon-reexec
-        sudo systemctl daemon-reload
+    sudo systemctl daemon-reexec
+    sudo systemctl daemon-reload
 
 4. Enable the service:
 
-        sudo systemctl enable snaphat.service
+    sudo systemctl enable snaphat.service
 
 5. Reboot your RPi
 
-        sudo reboot
+    sudo reboot
 
 ## Future goals
 
