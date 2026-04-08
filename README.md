@@ -25,8 +25,7 @@ SnapHAT is a RaspberryPi-based handheld camera device with real-time Bayer order
 * Python 3.13
 * I2C and SPI enabled via `raspi-config`
 
-Scripts in this repository assume hardware from [SnapHAT PCB](https://github.com/
-marchmare/snaphat-pcb) is used, follow the link for details.
+Scripts in this repository assume hardware from [SnapHAT PCB](https://github.com/marchmare/snaphat-pcb) is used, follow the link for details.
 
 ### Installation
 
