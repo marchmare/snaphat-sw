@@ -4,7 +4,8 @@ This repository contains software for **SnapHAT** - a RaspberryPi-based photo ca
 
 SnapHAT is a RaspberryPi-based handheld camera device with real-time Bayer ordered dithering, custom pixel-art and sprite-based UI and classic console-inspired controls.
 
-> [!TIP] This repository is work in progress — core features are functional, but the PCB for this device is still evolving so mapping and configuration might not be definitive yet.
+> [!TIP] 
+> This repository is work in progress — core features are functional, but the PCB for this device is still evolving so mapping and configuration might not be definitive yet.
 
 ## Features
 
@@ -33,12 +34,12 @@ marchmare/snaphat-pcb) is used, follow the link for details.
 
 2. Clone the repository:
 
-    git clone https://github.com/marchmare/snaphat-sw.git
-    cd snaphat-sw
+        git clone https://github.com/marchmare/snaphat-sw.git
+        cd snaphat-sw
 
 3. Run the entry script:
 
-    python3 main.py
+        python3 main.py
 
 Captured frames are saved into `camera/` directory.
 
@@ -115,26 +116,26 @@ To find PARTUUID:
 
 1. Update paths to SnapHAT scripts repository and username if they differ from the default in `snaphat.service` file:
 
-    User=pi 
-    WorkingDirectory=/home/pi/snaphat 
-    ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py  
+        User=pi 
+        WorkingDirectory=/home/pi/snaphat 
+        ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py  
 
 2. Copy the service file:
 
-    sudo cp snaphat.service /etc/systemd/system/
+        sudo cp snaphat.service /etc/systemd/system/
 
 3. Reload `systemd`:
 
-    sudo systemctl daemon-reexec
-    sudo systemctl daemon-reload
+        sudo systemctl daemon-reexec
+        sudo systemctl daemon-reload
 
 4. Enable the service:
 
-    sudo systemctl enable snaphat.service
+        sudo systemctl enable snaphat.service
 
 5. Reboot your RPi
 
-    sudo reboot
+        sudo reboot
 
 ## Future goals
 
