@@ -1,0 +1,17 @@
+[Unit]
+Description=SnapHAT app
+After=dev-mmcblk0p2.device systemd-remount-fs.service
+Wants=dev-mmcblk0p2.device systemd-remount-fs.service
+
+[Service]
+Type=simple
+User=pi 
+WorkingDirectory=/home/pi/snaphat 
+ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py 
+Restart=always
+RestartSec=2
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target
