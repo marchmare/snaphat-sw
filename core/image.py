@@ -308,30 +308,6 @@ class RGBImage(Image):
 
         return self.to_RGB565().flatten()
 
-    def save(self, output_dir: str, orientation: int = 1) -> str | None:
-        """
-        Save the image as a PNG file with EXIF orientation metadata.
-
-        Image is converted from BGR to RGB before saving.
-        Filename is generated from the current timestamp.
-        """
-
-        from PIL import Image as PILImage
-        import piexif  # type: ignore
-        from datetime import datetime
-        from os import makedirs
-
-        makedirs(output_dir, exist_ok=True)
-        file_path = f"{output_dir}/{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
-
-        img = PILImage.fromarray(self.image[..., ::-1], mode="RGB")
-
-        exif_dict = {"0th": {piexif.ImageIFD.Orientation: orientation}}
-        exif_bytes = piexif.dump(exif_dict)
-
-        img.save(file_path, exif=exif_bytes)
-        return file_path
-
 
 class CameraFrame(RGBImage):
     """
