@@ -24,9 +24,10 @@ class Device:
 
         self.display = Display()
 
-        from device.sensors import MotionSensor
+        from device.sensors import MotionSensor, USBMonitor
         from device.camera import Camera
 
+        self.usb = USBMonitor()
         self.motion = MotionSensor()
         self.buzzer = PWM(BuzzerSettings)
         self.camera = Camera()

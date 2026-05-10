@@ -7,6 +7,7 @@ from threading import Lock, Thread
 from time import sleep
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from os import listdir
 
 T = TypeVar("T")
 
@@ -16,14 +17,15 @@ class SensorBase(Generic[T], ABC):
 
     def __init__(self, interval: Optional[float] = None, verbose: Optional[bool] = False) -> None:
         self._interval = interval
-        self._state: Optional[T] = None
         self._verbose = verbose
+
+        self._state: Optional[T] = None
 
         self._lock = Lock()
         self._is_running = False
         self._thread: Optional[Thread] = None
 
-        if interval:
+        if self._interval:
             self.start()
 
     def start(self) -> None:
@@ -42,7 +44,9 @@ class SensorBase(Generic[T], ABC):
     def _run(self) -> None:
         while self._is_running:
             self.read()
-            sleep(self._interval)
+
+            if self._interval:
+                sleep(self._interval)
 
     def read(self) -> T:
         """Read and return recent sensor measurement data. Result is cached in `_state`."""
@@ -169,3 +173,45 @@ class PowerMonitor(SensorBase[PowerState]):
 
         A, B, C = 105.2741, 630.3598, 939.9309
         return int(A * vbus**2 - B * vbus + C)
+
+
+@dataclass
+class USBState:
+    usb_ready: bool
+    suspended: int
+    connection_status: str
+
+
+class USBMonitor(SensorBase[USBState]):
+    """USB monitor tracking USB connection events."""
+
+    def __init__(self, interval=1.0) -> None:
+        self._usbdevice = listdir("/sys/class/udc")[0]
+        super().__init__(interval, verbose=True)  # enable threading
+
+        self._state = USBState(False, 1, "not attached")
+
+    def _poll_connection_status(self) -> str:
+        try:
+            with open(f"/sys/class/udc/{self._usbdevice}/state") as f:
+                return f.read().strip()
+        except FileNotFoundError:
+            return "not attached"
+
+    def _poll_suspended_status(self) -> bool:
+        try:
+            with open(f"/sys/bus/gadget/devices/gadget.0/suspended") as f:
+                return int(f.read().strip())
+        except FileNotFoundError:
+            return 1
+
+    def _get_data(self) -> USBState:
+        suspended = self._poll_suspended_status()
+        connection_status = self._poll_connection_status()
+        usb_ready = suspended == 0 and connection_status == "configured"
+
+        return USBState(
+            usb_ready=usb_ready,
+            suspended=suspended,
+            connection_status=connection_status,
+        )
