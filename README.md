@@ -95,10 +95,11 @@ Enable:
 
 ### `config.txt`
 
-Configure GPIO pullups for buttons:
+Configure GPIO pullups for buttons and pulldowns for indicator LEDs:
 
     # GPIOs
-    gpio=17,27,22,5,6,13,19,26=pu
+    gpio=27,17,22,13,0,5,6,26=pu
+    gpio=19,12,16=pd
 
 Configure SPI LCD overlay:
 
@@ -112,7 +113,7 @@ Configure SPI LCD overlay:
 
 Enable silent boot with no console, enable OTG mode on RPi and speed up booting time (replace <partuid> and <reg> with values specific to your device):
 
-    root=PARTUUID=<partuid> rootfstype=ext4 rootwait modules-load=dwc2,g_mass_storage quiet loglevel=0 logo.nologo vt.global_cursor_default=0 splash fastboot fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
+    root=PARTUUID=<partuid> rootfstype=ext4 rootwait quiet loglevel=0 logo.nologo vt.global_cursor_default=0 fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
 
 To find PARTUUID:
 
