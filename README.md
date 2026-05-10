@@ -106,12 +106,17 @@ Configure SPI LCD overlay:
     # SPI LCD
     dtoverlay=fbtft,spi0-0,ili9341,bgr,rotate=270,cs=0,dc_pin=25,reset_pin=24,bl_pin=12
 
+Configure USB OTG to emulate mass storage device:
+
+    # USB OTG
+    dtoverlay=dwc2
+
 ### `cmdline.txt`
 
 > [!WARNING]
 > Create backup before modifying `cmdline.txt`.
 
-Enable silent boot with no console, enable OTG mode on RPi and speed up booting time (replace <partuid> and <reg> with values specific to your device):
+Enable silent boot with no console and speed up booting time (replace <partuid> and <reg> with values specific to your device):
 
     root=PARTUUID=<partuid> rootfstype=ext4 rootwait quiet loglevel=0 logo.nologo vt.global_cursor_default=0 fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
 
