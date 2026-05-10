@@ -44,18 +44,27 @@ Captured frames are saved into `camera/` directory.
 
 ### Controls
 
-| Button name | RPi BCM pin | Camera preview function | Gallery function |
-| ----------- | ----------- | ------------ | ------------ | 
-| A           | 27          | Toggle color palette | --- | 
-| MENU        | 17          | Open photo gallery | --- | 
-| B           | 22          | --- | Back to camera | 
-| UP          | 19          | Increase color levels | --- | 
-| DOWN        | 5           | Decrease color levels | --- | 
-| LEFT        | 6           | Decrease Bayer matrix size | Next photo | 
-| RIGHT       | 13          | Increase Bayer matrix size | Previous photo | 
-| SHUTTER     | 26          | Capture photo | --- | 
+| Button name   | RPi BCM pin | Camera preview function | Gallery function |
+| ------------- | ----------- | ------------ | ------------ | 
+| `A`           | 27          | Toggle color palette | --- | 
+| `MENU`        | 17          | Open photo gallery | --- | 
+| `B`           | 22          | --- | Back to camera | 
+| `UP`          | 13          | Increase color levels | --- | 
+| `DOWN`        | 0           | Decrease color levels | --- | 
+| `LEFT`        | 5           | Decrease Bayer matrix size | Next photo | 
+| `RIGHT`       | 6           | Increase Bayer matrix size | Previous photo | 
+| `SHUTTER`     | 26          | Capture photo | --- | 
+
+### Indicators
+
+| LED name      | RPi BCM pin | Function     |
+| ------------- | ----------- | ------------ |
+| `LED_LBO`     | 19          | Signal low baterry levels detected by power monitor (adjustable with `low_pct_val` in `PowerSettings` class) |
+| `DISPLAY_BL`  | 12          | Display backlight (used as a GPIO, but can configured as PWM)| 
+| `LED_SHUTTER` | 16          | Shutter LED visible from the photosensor side, indicating photo capture events | 
 
 ## Project structure
+
     .
     ├── assets/             - PNG spritesheets used by UI
     ├── camera/             - output directory for captured images
@@ -86,10 +95,11 @@ Enable:
 
 ### `config.txt`
 
-Configure GPIO pullups for buttons:
+Configure GPIO pullups for buttons and pulldowns for indicator LEDs:
 
     # GPIOs
-    gpio=17,27,22,5,6,13,19,26=pu
+    gpio=27,17,22,13,0,5,6,26=pu
+    gpio=19,12,16=pd
 
 Configure SPI LCD overlay:
 
@@ -103,7 +113,7 @@ Configure SPI LCD overlay:
 
 Enable silent boot with no console, enable OTG mode on RPi and speed up booting time (replace <partuid> and <reg> with values specific to your device):
 
-    root=PARTUUID=<partuid> rootfstype=ext4 rootwait modules-load=dwc2,g_mass_storage quiet loglevel=0 logo.nologo vt.global_cursor_default=0 splash fastboot fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
+    root=PARTUUID=<partuid> rootfstype=ext4 rootwait quiet loglevel=0 logo.nologo vt.global_cursor_default=0 fsck.mode=skip cfg80211.ieee80211_regdom=<reg>
 
 To find PARTUUID:
 

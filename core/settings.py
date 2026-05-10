@@ -52,10 +52,10 @@ class GPIOSettings:
 
 @dataclass(frozen=True)
 class InputMappingSettings:
-    up: int = 19
-    down: int = 5
-    left: int = 6
-    right: int = 13
+    up: int = 13
+    down: int = 0
+    left: int = 5
+    right: int = 6
     a: int = 27
     menu: int = 17
     b: int = 22
@@ -64,5 +64,6 @@ class InputMappingSettings:
 
 @dataclass(frozen=True)
 class OutputMappingSettings:
-    battery_low: int = 16  # TODO: update this for rev.1.1
+    battery_low: int = 19
     display_backlight: int = 12
+    shutter: int = 16

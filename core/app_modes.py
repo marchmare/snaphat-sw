@@ -191,8 +191,8 @@ class CameraPreview(AppMode):
 
         print(f"{self.app.palettes.current} set!")
 
-    def on_click_b(self) -> None:
-        """BUTTON B: Capture current dithered frame."""
+    def on_click_shutter(self) -> None:
+        """BUTTON SHUTTER: Capture current dithered frame."""
 
         self.app.sounds.click.play()
         orientation = self.app.device.motion.read()
@@ -246,18 +246,6 @@ class CameraPreview(AppMode):
         self.app.sounds.woop.play_threaded()
         self.app.mode = Gallery(self.app)
         print("Switched to Gallery.")
-
-    def on_click_shutter(self) -> None:
-        """BUTTON SHUTTER: Capture current dithered frame."""
-
-        ...
-
-        # TODO: revert from "b" in rev.1.1
-        # self.app.sounds.click.play()
-        # orientation = self.app.device.motion.read()
-        # path = self.save_frame(orientation)
-
-        # print(f"Saved frame to {path}, orientation is {orientation.name}")
 
     def adjust_setting(self, value: int, change: callable, range: tuple[int, int], label: str) -> int:
         """Resolve adjusting a setting based on initial value, passed adjusting function, setting allowed range and label for displaying messages."""
