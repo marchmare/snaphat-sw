@@ -44,18 +44,27 @@ Captured frames are saved into `camera/` directory.
 
 ### Controls
 
-| Button name | RPi BCM pin | Camera preview function | Gallery function |
-| ----------- | ----------- | ------------ | ------------ | 
-| A           | 27          | Toggle color palette | --- | 
-| MENU        | 17          | Open photo gallery | --- | 
-| B           | 22          | --- | Back to camera | 
-| UP          | 19          | Increase color levels | --- | 
-| DOWN        | 5           | Decrease color levels | --- | 
-| LEFT        | 6           | Decrease Bayer matrix size | Next photo | 
-| RIGHT       | 13          | Increase Bayer matrix size | Previous photo | 
-| SHUTTER     | 26          | Capture photo | --- | 
+| Button name   | RPi BCM pin | Camera preview function | Gallery function |
+| ------------- | ----------- | ------------ | ------------ | 
+| `A`           | 27          | Toggle color palette | --- | 
+| `MENU`        | 17          | Open photo gallery | --- | 
+| `B`           | 22          | --- | Back to camera | 
+| `UP`          | 13          | Increase color levels | --- | 
+| `DOWN`        | 0           | Decrease color levels | --- | 
+| `LEFT`        | 5           | Decrease Bayer matrix size | Next photo | 
+| `RIGHT`       | 6           | Increase Bayer matrix size | Previous photo | 
+| `SHUTTER`     | 26          | Capture photo | --- | 
+
+### Indicators
+
+| LED name      | RPi BCM pin | Function     |
+| ------------- | ----------- | ------------ |
+| `LED_LBO`     | 19          | Signal low baterry levels detected by power monitor (adjustable with `low_pct_val` in `PowerSettings` class) |
+| `DISPLAY_BL`  | 12          | Display backlight (used as a GPIO, but can configured as PWM)| 
+| `LED_SHUTTER` | 16          | Shutter LED visible from the photosensor side, indicating photo capture events | 
 
 ## Project structure
+
     .
     ├── assets/             - PNG spritesheets used by UI
     ├── camera/             - output directory for captured images
