@@ -58,17 +58,23 @@ class App:
 
     def handle_storage(self) -> None:
         """Handle USB mass storage connect/disconnect."""
-        if self.device.usb.state.usb_ready and not self.storage.is_exposed:
-            input("Prompting the user to enable usb")
-            self.storage.expose()
 
-        if not self.device.usb.state.usb_ready and self.storage.is_exposed:
-            print("Forced disconnect")
+        usb_ready = self.device.usb.state.usb_ready
+
+        if usb_ready and not self.storage.is_exposed and self.storage.expose_allowed:
+            # detect USB cable plugged and mass storage is not exposed
+            # switch to new state here
+            # self.storage.expose_allowed = False
+            # self.mode = ... <- TODO: write storage input pending state
+            pass
+
+        if not usb_ready and self.storage.is_exposed:
+            # force cleanup if the USB host disconnected unexpectedly,
+            # resets `expose_allowed` so plugging cable again will trigger the expose prompt
+            self.storage.expose_allowed = True
             self.storage.unexpose()
 
-        if self.device.usb.state.usb_ready and self.storage.is_exposed:
-            input("Prompting user to disconnect")
-            self.storage.unexpose()
+        # user disconnect will be handled in the specific app modes
 
     def update_state(self) -> None:
         """Handle sensor outputs and other app state logic. Redirect to AppState as each mode handles device/UI state differently."""

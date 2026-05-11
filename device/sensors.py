@@ -189,7 +189,7 @@ class USBMonitor(SensorBase[USBState]):
         self._usbdevice = listdir("/sys/class/udc")[0]
         super().__init__(interval, verbose=True)  # enable threading
 
-        self._state = USBState(False, 1, "not attached")
+        self._state = USBState(False, 0, "not attached")
 
     def _poll_connection_status(self) -> str:
         try:

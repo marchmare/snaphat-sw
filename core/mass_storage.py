@@ -1,7 +1,14 @@
 from core.settings import AppSettings
 
-from os.path import exists
+from pathlib import Path
+from os import sync
 from subprocess import run
+from shutil import copy2
+
+# pathlib AppSetiings paths:
+MASS_STORAGE = Path(AppSettings.mass_storage_path)
+CAMERA_OUTPUT = Path(AppSettings.output_path)
+MOUNT_POINT = Path(AppSettings.mass_storage_mount_path)
 
 
 class MassStorage:
@@ -14,6 +21,7 @@ class MassStorage:
 
         self.create_storage_file()
         self.is_exposed = False
+        self.expose_allowed = True
 
     def create_storage_file(self) -> None:
         """
@@ -21,66 +29,81 @@ class MassStorage:
         Skips this step if storage file already exists.
         """
 
-        if self.check_storage_file_exists():
+        if MASS_STORAGE.exists():
             print("Storage already exists.")
             return
 
         print("Allocating space for storage virtual disk")
-        with open(AppSettings.mass_storage_path, "wb") as f:
+        with MASS_STORAGE.open("wb") as f:
             f.truncate(AppSettings.mass_storage_size)
 
         run(
-            [
-                "mkfs.vfat",
-                "-F",
-                "32",
-                "-I",
-                AppSettings.mass_storage_path,
-            ],
+            ["mkfs.vfat", "-F", "32", "-I", str(MASS_STORAGE)],
             check=True,
         )
 
-    def check_storage_file_exists(self) -> bool:
-        """Check if storage file already exists at set path"""
-
-        return exists(AppSettings.mass_storage_path)
-
     def expose(self) -> None:
-        print("EXPOSE USB")
+        """Expose mass storage image over USB"""
+
         self._stop_module()
         run(
-            [
-                "sudo",
-                "/sbin/modprobe",
-                "g_mass_storage",
-                f"file={AppSettings.mass_storage_path}",
-                "stall=0",
-                "ro=1",
-                "removable=1",
-            ],
+            ["/sbin/modprobe", "g_mass_storage", f"file={str(MASS_STORAGE)}", "stall=0", "ro=1", "removable=1"],
             check=True,
         )
         self.is_exposed = True
 
     def unexpose(self) -> None:
-        print("UNEXPOSE USB")
+        """Unexpose mass storage image over USB."""
+
         self._stop_module()
         run(
-            [
-                "sudo",
-                "/sbin/modprobe",
-                "g_mass_storage",
-                "stall=0",
-                "ro=1",
-                "removable=1",
-            ],
+            ["/sbin/modprobe", "g_mass_storage", "stall=0", "ro=1", "removable=1"],
             check=True,
         )
         self.is_exposed = False
 
     def _stop_module(self) -> None:
-        print("STOP MODULE")
-        run(["sudo", "/sbin/rmmod", "g_mass_storage"], check=True)
+        """Disable g_mass_storage."""
 
-    def _update_storage(self):
-        pass
+        run(["/sbin/rmmod", "g_mass_storage"], check=True)
+
+    def _update_storage(self) -> None:
+        """Sync current camera output directory with the mass storage image."""
+
+        MOUNT_POINT.mkdir(exist_ok=True, parents=True)
+        self._mount()
+
+        try:
+            # purge previous session
+            for file in MOUNT_POINT.iterdir():
+                if not file.is_file():
+                    continue
+                file.unlink()
+
+            # copy current state
+            for file in CAMERA_OUTPUT.iterdir():
+                if not file.is_file():
+                    continue
+                copy2(file, MOUNT_POINT)
+
+        finally:
+            sync()
+            self._umount()
+
+    @staticmethod
+    def _mount() -> None:
+        """Mount mass storage image in mount point."""
+
+        run(
+            ["mount", "-o", "loop", str(MASS_STORAGE), str(MOUNT_POINT)],
+            check=True,
+        )
+
+    @staticmethod
+    def _umount() -> None:
+        """Unmount mass storage image."""
+
+        run(
+            ["umount", MOUNT_POINT],
+            check=True,
+        )
