@@ -199,6 +199,11 @@ class USBMonitor(SensorBase[USBState]):
             return "not attached"
 
     def _poll_suspended_status(self) -> bool:
+        """
+        Poll suspended status to determine if USB was disconnected.
+        This is a workaround as polling /sys/class/udc/<usbdevice>/state status is inconclusive,
+        since it isn't refreshed after unplugging.
+        """
         try:
             with open(f"/sys/bus/gadget/devices/gadget.0/suspended") as f:
                 return int(f.read().strip())

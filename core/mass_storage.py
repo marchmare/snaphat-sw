@@ -67,6 +67,7 @@ class MassStorage:
             check=True,
         )
         self.state = StorageState.EXPOSED
+        print("USB mass storage exposed")
 
     def unexpose(self) -> None:
         """Unexpose mass storage image over USB."""
@@ -77,6 +78,7 @@ class MassStorage:
             check=True,
         )
         self.state = StorageState.IDLE
+        print("USB disconnected")
 
     def update_storage(self) -> None:
         """Sync current camera output directory with the mass storage image."""
@@ -84,6 +86,7 @@ class MassStorage:
         if self.state != StorageState.IDLE:
             return
 
+        print("Updating USB mass storage image")
         MOUNT_POINT.mkdir(exist_ok=True, parents=True)
         self._mount()
 
