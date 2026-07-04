@@ -57,15 +57,8 @@ class BoxFrame(UIElement):
     def __init__(self, height: int, width: int, **kwargs: Unpack[UIElementKwargs]) -> None:
         super().__init__(**kwargs)
 
-        self._sprites = {
-            "tl": UI_8x11.get(8),
-            "tr": UI_8x11.get(9),
-            "br": UI_8x11.get(10),
-            "bl": UI_8x11.get(11),
-            "h": UI_8x11.get(12),
-            "v": UI_8x11.get(13),
-            "bg": UI_8x11.get(14),
-        }
+        _sprites = ["tl", "tr", "br", "bl", "h", "v", "bg"]
+        self._sprites = {s: UI_8x11.get(i + 8) for i, s in enumerate(_sprites)}
 
         self.height = height
         self.width = width
@@ -74,6 +67,8 @@ class BoxFrame(UIElement):
             raise ValueError("BoxFrame must be at least 2x2")
 
     def get_sprite(self, y: int, x: int) -> IndexedImage:
+        """Determine sprite orientation and type based on current cell position and return it from the sprites dictionary."""
+
         is_top = y == 0
         is_bottom = y == self.height - 1
         is_left = x == 0
@@ -95,13 +90,13 @@ class BoxFrame(UIElement):
 
         return self._sprites["bg"]
 
-    def frame_items(self) -> Generator[tuple[int, int, IndexedImage], Any, None]:
+    def cells(self) -> Generator[tuple[int, int, IndexedImage], Any, None]:
         for y in range(self.height):
             for x in range(self.width):
                 yield y, x, self.get_sprite(y, x)
 
     def compose(self) -> None:
-        for y, x, sprite in self.iter_cells():
+        for y, x, sprite in self.cells():
             self.merge(sprite, UI_8x11.sw * x, UI_8x11.sh * y)
 
 
