@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+from core.image import IndexedImage
 from ui.core import UIElement, UIElementKwargs, UITimer
-from ui.assets import FONT_8x11, SP_heart_empty, SP_heart_full, SP_sad_smiley
+from ui.assets import UI_8x11, FONT_8x11, SP_heart_empty, SP_heart_full, SP_sad_smiley
 from time import monotonic
 
-from typing import Unpack, TYPE_CHECKING
+from typing import Any, Generator, Unpack, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from device.sensors import PowerState
@@ -48,6 +49,60 @@ class NotificationTextBlock(UIElement):
     def show(self) -> None:
         self._start = monotonic()
         self.visible = True
+
+
+class BoxFrame(UIElement):
+    """Box frame container. Width and height arguments correspond to UI_8x11 sprite dimensions."""
+
+    def __init__(self, height: int, width: int, **kwargs: Unpack[UIElementKwargs]) -> None:
+        super().__init__(**kwargs)
+
+        self._sprites = {
+            "tl": UI_8x11.get(8),
+            "tr": UI_8x11.get(9),
+            "br": UI_8x11.get(10),
+            "bl": UI_8x11.get(11),
+            "h": UI_8x11.get(12),
+            "v": UI_8x11.get(13),
+            "bg": UI_8x11.get(14),
+        }
+
+        self.height = height
+        self.width = width
+
+        if self.width < 2 or self.height < 2:
+            raise ValueError("BoxFrame must be at least 2x2")
+
+    def get_sprite(self, y: int, x: int) -> IndexedImage:
+        is_top = y == 0
+        is_bottom = y == self.height - 1
+        is_left = x == 0
+        is_right = x == self.width - 1
+
+        if is_top and is_left:
+            return self._sprites["tl"]
+        if is_top and is_right:
+            return self._sprites["tr"]
+        if is_bottom and is_left:
+            return self._sprites["bl"]
+        if is_bottom and is_right:
+            return self._sprites["br"]
+
+        if is_top or is_bottom:
+            return self._sprites["h"]
+        if is_left or is_right:
+            return self._sprites["v"]
+
+        return self._sprites["bg"]
+
+    def frame_items(self) -> Generator[tuple[int, int, IndexedImage], Any, None]:
+        for y in range(self.height):
+            for x in range(self.width):
+                yield y, x, self.get_sprite(y, x)
+
+    def compose(self) -> None:
+        for y, x, sprite in self.iter_cells():
+            self.merge(sprite, UI_8x11.sw * x, UI_8x11.sh * y)
 
 
 # Complex UI elements:
