@@ -36,11 +36,14 @@ Scripts in this repository assume hardware from [SnapHAT PCB](https://github.com
         git clone https://github.com/marchmare/snaphat-sw.git
         cd snaphat-sw
 
-3. Run the entry script:
+3. Setup virtual environment and install required packages:
 
-        python3 main.py
+        python3 -m venv .venv --system-site-packages
+        .venv/bin/pip install -r requirements.txt
 
-Captured frames are saved into `camera/` directory.
+4. Run the entry script:
+
+        sudo .venv/bin/python main.py
 
 ### Controls
 
@@ -128,11 +131,9 @@ To find PARTUUID:
 
 ### Auto-start on boot 
 
-1. Update paths to SnapHAT scripts repository and username if they differ from the default in `snaphat.service` file:
+1. Update paths to SnapHAT scripts repository if it differs from the default in `snaphat.service` file:
 
-        User=pi 
-        WorkingDirectory=/home/pi/snaphat 
-        ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py  
+        ExecStart=/home/pi/snaphat-sw/.venv/bin/python -u /home/pi/snaphat-sw/main.py 
 
 2. Copy the service file:
 
@@ -151,9 +152,12 @@ To find PARTUUID:
 
         sudo reboot
 
+To see console logs while `snaphat.service` is running, use:
+
+        journalctl -u snaphat.service -f
+
 ## Future goals
 
 * On-device settings menu
 * Gallery tools (delete, palette swap for saved images)
 * Improved UI framework (scrolling screens, context menus, richer text blocks)
-* USB mass-storage mode via OTG

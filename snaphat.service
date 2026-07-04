@@ -5,13 +5,14 @@ Wants=dev-mmcblk0p2.device systemd-remount-fs.service
 
 [Service]
 Type=simple
-User=pi 
+User=root 
 WorkingDirectory=/home/pi/snaphat 
-ExecStart=/usr/bin/python3 /home/pi/snaphat-sw/main.py 
+ExecStart=/home/pi/snaphat-sw/.venv/bin/python -u /home/pi/snaphat-sw/main.py 
 Restart=always
 RestartSec=2
-StandardOutput=null
-StandardError=null
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
 
 [Install]
 WantedBy=multi-user.target
