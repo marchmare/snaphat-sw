@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 from core.image import IndexedImage
+from sound.core import Sound
 from ui.core import UIElement, UIElementKwargs, UITimer
 from ui.assets import UI_8x11, FONT_8x11, SP_heart_empty, SP_heart_full, SP_sad_smiley
 from time import monotonic
 
-from typing import Any, Generator, Unpack, TYPE_CHECKING
+from typing import Any, Generator, Callable, Unpack, Optional, TYPE_CHECKING
+from dataclasses import dataclass
 
 if TYPE_CHECKING:
     from device.sensors import PowerState
@@ -100,7 +102,83 @@ class BoxFrame(UIElement):
             self.merge(sprite, UI_8x11.sw * x, UI_8x11.sh * y)
 
 
-# Complex UI elements:
+@dataclass
+class MenuListItem:
+    text: str
+    label: str | None = None
+    callback: Callable[[], None] | None = None
+
+
+class MenuList(UIElement):
+    """Interactive menu list."""
+
+    def __init__(
+        self,
+        items: list[MenuListItem],
+        title: str | None = None,
+        selected: int = 0,
+        frame: bool = True,
+        sound_walk: Optional[Sound] = None,
+        **kwargs: Unpack[UIElementKwargs],
+    ) -> None:
+        super().__init__(**kwargs)
+
+        self.items = items
+        self._current = 0
+        self.current = selected
+        self.title = title
+
+        self._frame_offset = 1 if frame else 0
+        self._title_offset = 1 if title else 0
+
+        self.sound_walk = sound_walk
+
+    @property
+    def current(self) -> int:
+        return self._current
+
+    @current.setter
+    def current(self, value: int) -> None:
+        """Setter for `current` selected item value. Plays a sound when the value changes."""
+        new_value = max(0, min(value, len(self.items) - 1))
+        if new_value != self.current and self.visible and self.sound_walk:
+            self.sound_walk.play_threaded()
+        self._current = new_value
+
+    @property
+    def selected(self) -> str:
+        return self.items[self.current]
+
+    def accept(self) -> None:
+        if self.selected.callback:
+            self.selected.callback()
+
+    def _resolve_max_width(self) -> int:
+        """Resolve max width of the entire menu list based on stored items"""
+        max_width = 0
+        for item in self.items:
+            if len(item.text) > max_width:
+                max_width = len(item.text)
+        return max_width + 2
+
+    def compose(self) -> None:
+        if self._frame_offset:
+            self.merge(BoxFrame(width=self._resolve_max_width() + 2, height=len(self.items) + self._title_offset + 2))
+
+        if self.title:
+            self.merge(
+                TextBlock(text=self.title),
+                x=self._frame_offset * FONT_8x11.sw,
+                y=self._frame_offset * FONT_8x11.sh,
+            )
+
+        for i, item in enumerate(self.items):
+            cursor = "> " if i == self._current else "  "
+            self.merge(
+                TextBlock(text=cursor + item.text),
+                x=self._frame_offset * FONT_8x11.sw,
+                y=(i + self._title_offset + self._frame_offset) * FONT_8x11.sh,
+            )
 
 
 class BatteryIndicator(UIElement):
