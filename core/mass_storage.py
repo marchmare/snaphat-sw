@@ -2,7 +2,7 @@ from core.settings import AppSettings
 
 from pathlib import Path
 from os import sync
-from subprocess import run
+from subprocess import run, CalledProcessError
 from shutil import copy2
 from enum import IntEnum
 
@@ -111,7 +111,10 @@ class MassStorage:
     def _stop_module(self) -> None:
         """Disable g_mass_storage."""
 
-        run(["/sbin/rmmod", "g_mass_storage"], check=True)
+        try:
+            run(["/sbin/rmmod", "g_mass_storage"], check=True)
+        except CalledProcessError:
+            pass
 
     @staticmethod
     def _mount() -> None:

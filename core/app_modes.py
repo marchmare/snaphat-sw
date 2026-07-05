@@ -121,7 +121,7 @@ class USBPluggedPrompt(AppMode):
     def update_state(self) -> None:
         self.ui.battery_indicator.update_state(self.app.device.power.state)
 
-        if not self.app.device.usb.state.usb_ready:
+        if self.app.device.usb.state.usb_ready == False:
             self.disconnect()
 
     def prepare_base_frame(self) -> RGBImage:
@@ -153,16 +153,18 @@ class USBPluggedPrompt(AppMode):
         self.cancel()
 
     def disconnect(self) -> None:
-        """Cancel connection callback"""
+        """Disconnect and flush storage state"""
+        self.app.storage.unexpose()
+        self.app.storage.ready()
         self.app.mode = CameraPreview(self.app)
-        print("Switched to CameraPreview.")
+        print("Switched to CameraPreview (disconnected).")
 
     def cancel(self) -> None:
         """Cancel connection callback"""
         self.app.sounds.woop2.play()
-        self.app.storage.state = StorageState.DECLINED
+        self.app.storage.decline()
         self.app.mode = CameraPreview(self.app)
-        print("Switched to CameraPreview.")
+        print("Switched to CameraPreview (declined).")
 
     def accept(self) -> None:
         """Accept connection callback"""
@@ -270,9 +272,9 @@ class CameraPreview(AppMode):
     def update_state(self) -> None:
         self.ui.battery_indicator.update_state(self.app.device.power.state)
 
-        if self.app.device.usb.state.usb_ready and not self.app.storage.state == StorageState.DECLINED:
-            self.app.mode = USBPluggedPrompt(self.app)
-            print("Switched to USBPluggedPrompt.")
+        # if self.app.device.usb.state.usb_ready and not self.app.storage.state == StorageState.DECLINED:
+        #     self.app.mode = USBPluggedPrompt(self.app)
+        #     print("Switched to USBPluggedPrompt.")
 
     def prepare_base_frame(self) -> RGBImage:
         base_frame = self.app.device.camera.capture()
