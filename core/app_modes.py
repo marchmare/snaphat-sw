@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from device.sensors import MotionState
 from core.image import RGBImage, CameraFrame
+from core.mass_storage import StorageState
 from core.settings import AppSettings, InputMappingSettings, DithererSettings
-from ui.elements import TextBlock, NotificationTextBlock, BatteryIndicator
+from ui.elements import TextBlock, NotificationTextBlock, BatteryIndicator, BoxFrame, MenuList, MenuListItem
 from ui.screens import SCR_gallery_empty, SCR_img_load_failed
 from ui.core import UITarget, AlignX, AlignY
 
@@ -83,6 +84,104 @@ class AppMode(ABC):
             return
         if handler := self.button_map.get(button.label):
             handler()
+
+
+class USBPluggedPrompt(AppMode):
+    """Dialog box asking the user wether camera files should get exposed to host or not."""
+
+    def __init__(self, app: App) -> None:
+        super().__init__(app)
+
+        from core.ditherer import Ditherer
+
+        self.ditherer = Ditherer()
+        self.camera_image: CameraFrame = None
+
+    def setup_ui(self) -> None:
+        self.ui.add(BatteryIndicator(id="battery_indicator", x_align=AlignX.RIGHT))
+
+        self.ui.add(BoxFrame(height=20, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
+        self.ui.add(TextBlock(text="USB plugged in!", x_align=AlignX.CENTER, y_align=AlignY.CENTER, y=0))
+        self.ui.add(TextBlock(text="Want to share stored files?", x_align=AlignX.CENTER, y_align=AlignY.CENTER, y=11))
+
+        self.ui.add(
+            MenuList(
+                id="menu",
+                items=[
+                    MenuListItem(text="Let's go!", callback=self.accept),
+                    MenuListItem(text="Not now", callback=self.cancel),
+                ],
+                x_align=AlignX.CENTER,
+                y_align=AlignY.CENTER,
+                y=22,
+                frame=False,
+                sound_walk=self.app.sounds.tick,
+            )
+        )
+
+    def update_state(self) -> None:
+        self.ui.battery_indicator.update_state(self.app.device.power.state)
+
+        if not self.app.device.usb.state.usb_ready:
+            self.disconnect()
+
+    def prepare_base_frame(self) -> RGBImage:
+        base_frame = self.app.device.camera.capture()
+        base_frame.dither(self.ditherer, self.app.palettes.current)
+
+        self.camera_image = base_frame.copy()
+
+        return base_frame
+
+    def on_click_up(self) -> None:
+        """BUTTON UP: navigate to previous menu item"""
+
+        self.ui.menu.current -= 1
+
+    def on_click_down(self) -> None:
+        """BUTTON DOWN: navigate to next menu item"""
+
+        self.ui.menu.current += 1
+
+    def on_click_a(self) -> None:
+        """BUTTON A: select currently highlighted menu item"""
+
+        self.ui.menu.selected.callback()
+
+    def on_click_b(self) -> None:
+        """BUTTON B: cancel connection"""
+
+        self.cancel()
+
+    def disconnect(self) -> None:
+        """Cancel connection callback"""
+        self.app.mode = CameraPreview(self.app)
+        print("Switched to CameraPreview.")
+
+    def cancel(self) -> None:
+        """Cancel connection callback"""
+        self.app.sounds.woop2.play()
+        self.app.storage.state = StorageState.DECLINED
+        self.app.mode = CameraPreview(self.app)
+        print("Switched to CameraPreview.")
+
+    def accept(self) -> None:
+        """Accept connection callback"""
+        self.app.sounds.ting.play()
+        self.app.mode = USBConnecting(self.app)
+        print("Switched to USBConnecting.")
+
+
+class USBConnecting(AppMode):
+    """Animation displaying while mass storage image is being prepared."""
+
+    ...
+
+
+class USBConnected(AppMode):
+    """Dialog box showing when mass storage is exposed."""
+
+    ...
 
 
 class Gallery(AppMode):
@@ -171,6 +270,10 @@ class CameraPreview(AppMode):
 
     def update_state(self) -> None:
         self.ui.battery_indicator.update_state(self.app.device.power.state)
+
+        if self.app.device.usb.state.usb_ready and not self.app.storage.state == StorageState.DECLINED:
+            self.app.mode = USBPluggedPrompt(self.app)
+            print("Switched to USBPluggedPrompt.")
 
     def prepare_base_frame(self) -> RGBImage:
         base_frame = self.app.device.camera.capture()
