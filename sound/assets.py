@@ -20,6 +20,7 @@ class Sounds:
         self.error = Error(player)
         self.click = Click(player)
         self.ting = Ting(player)
+        self.tick = Tick(player)
 
 
 class Woop(Sound):
@@ -40,6 +41,16 @@ class Woop2(Sound):
     def play(self) -> None:
         with self.active():
             self.arpeggio(self.sequence, step_duration=0.008)
+
+
+class Tick(Sound):
+    def __init__(self, player: SoundPlayer) -> None:
+        super().__init__(player)
+        self.note1 = self.generator.get_note_freq("C7")
+
+    def play(self) -> None:
+        with self.active():
+            self.note(self.note1, 0.03)
 
 
 class Ting(Sound):
