@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from device.sensors import MotionState
-from core.image import RGBImage, CameraFrame
+from core.image import RGBImage, CameraFrame, EmptyRGBImage
 from core.mass_storage import StorageState
 from core.settings import AppSettings, InputMappingSettings, DithererSettings
 from ui.elements import TextBlock, NotificationTextBlock, BatteryIndicator, BoxFrame, MenuList, MenuListItem
@@ -86,8 +86,8 @@ class AppMode(ABC):
             handler()
 
 
-class USBPluggedPrompt(AppMode):
-    """Dialog box asking the user wether camera files should get exposed to host or not."""
+class USBHandler(AppMode):
+    """USB handler parent class for USB connection related modes."""
 
     def __init__(self, app: App) -> None:
         super().__init__(app)
@@ -97,9 +97,36 @@ class USBPluggedPrompt(AppMode):
         self.ditherer = Ditherer()
         self.camera_image: CameraFrame = None
 
-    def setup_ui(self) -> None:
-        self.ui.add(BatteryIndicator(id="battery_indicator", x_align=AlignX.RIGHT))
+    def update_state(self) -> None:
+        if self.app.device.usb.state.usb_ready == False:
+            self.disconnect()
 
+    def prepare_base_frame(self) -> RGBImage:
+        base_frame = EmptyRGBImage(fill=255)
+        base_frame.dither(self.ditherer, self.app.palettes.current)
+
+        return base_frame
+
+    def disconnect(self) -> None:
+        """Disconnect and flush storage state"""
+        self.app.storage.unexpose()
+        self.app.storage.enable()
+        self.app.mode = CameraPreview(self.app)
+        print("Switched to CameraPreview (disconnected).")
+
+    def cancel(self) -> None:
+        """Cancel connection callback"""
+        self.app.sounds.woop2.play()
+        self.app.storage.unexpose()
+        self.app.storage.decline()
+        self.app.mode = CameraPreview(self.app)
+        print("Switched to CameraPreview (declined).")
+
+
+class USBPlugged(USBHandler):
+    """Dialog box asking the user wether camera files should get exposed to host or not."""
+
+    def setup_ui(self) -> None:
         self.ui.add(BoxFrame(height=10, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
         self.ui.add(TextBlock(text="USB plugged in!", x_align=AlignX.CENTER, y=66))
         self.ui.add(TextBlock(text="Want to share stored files?", x_align=AlignX.CENTER, y=88))
@@ -117,20 +144,6 @@ class USBPluggedPrompt(AppMode):
                 sound_walk=self.app.sounds.tick,
             )
         )
-
-    def update_state(self) -> None:
-        self.ui.battery_indicator.update_state(self.app.device.power.state)
-
-        if self.app.device.usb.state.usb_ready == False:
-            self.disconnect()
-
-    def prepare_base_frame(self) -> RGBImage:
-        base_frame = self.app.device.camera.capture()
-        base_frame.dither(self.ditherer, self.app.palettes.current)
-
-        self.camera_image = base_frame.copy()
-
-        return base_frame
 
     def on_click_up(self) -> None:
         """BUTTON UP: navigate to previous menu item"""
@@ -152,20 +165,6 @@ class USBPluggedPrompt(AppMode):
 
         self.cancel()
 
-    def disconnect(self) -> None:
-        """Disconnect and flush storage state"""
-        self.app.storage.unexpose()
-        self.app.storage.ready()
-        self.app.mode = CameraPreview(self.app)
-        print("Switched to CameraPreview (disconnected).")
-
-    def cancel(self) -> None:
-        """Cancel connection callback"""
-        self.app.sounds.woop2.play()
-        self.app.storage.decline()
-        self.app.mode = CameraPreview(self.app)
-        print("Switched to CameraPreview (declined).")
-
     def accept(self) -> None:
         """Accept connection callback"""
         self.app.sounds.ting.play()
@@ -173,16 +172,60 @@ class USBPluggedPrompt(AppMode):
         print("Switched to USBConnecting.")
 
 
-class USBConnecting(AppMode):
+class USBConnecting(USBHandler):
     """Animation displaying while mass storage image is being prepared."""
 
-    ...
+    def __init__(self, app: App) -> None:
+        super().__init__(app)
+
+        self.app.storage.update_storage()
+        self.app.storage.expose()
+
+    def setup_ui(self) -> None:
+        self.ui.add(BoxFrame(height=10, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
+        self.ui.add(TextBlock(text="Connecting...", x_align=AlignX.CENTER, y=66))
+        self.ui.add(TextBlock(text="Just a minute!", x_align=AlignX.CENTER, y=88))
+
+        self.ui.add(TextBlock(text="...", x_align=AlignX.CENTER, y=132))
+
+    def update_state(self) -> None:
+        super().update_state()
+
+        if self.app.storage.state == StorageState.EXPOSED:
+            self.app.mode = USBConnected(self.app)
 
 
-class USBConnected(AppMode):
+class USBConnected(USBHandler):
     """Dialog box showing when mass storage is exposed."""
 
-    ...
+    def __init__(self, app: App) -> None:
+        super().__init__(app)
+
+        self.app.storage.update_storage()
+        self.app.storage.expose()
+
+    def setup_ui(self) -> None:
+        self.ui.add(BoxFrame(height=10, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
+        self.ui.add(TextBlock(text="Connected!", x_align=AlignX.CENTER, y=66))
+        self.ui.add(TextBlock(text=":)", x_align=AlignX.CENTER, y=88))
+
+        self.ui.add(
+            MenuList(
+                id="menu",
+                items=[
+                    MenuListItem(text="Disconnect", callback=self.cancel),
+                ],
+                x_align=AlignX.CENTER,
+                y=132,
+                frame=False,
+                sound_walk=self.app.sounds.tick,
+            )
+        )
+
+    def on_click_a(self) -> None:
+        """BUTTON A: select currently highlighted menu item"""
+
+        self.ui.menu.selected.callback()
 
 
 class Gallery(AppMode):

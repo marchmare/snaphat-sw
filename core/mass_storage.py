@@ -28,7 +28,8 @@ class MassStorage:
         """
 
         self._create_storage_file()
-        self.state: StorageState = StorageState.IDLE
+        self.unexpose()
+        self.enable()
 
     def _create_storage_file(self) -> None:
         """
@@ -50,13 +51,15 @@ class MassStorage:
         )
 
     def decline(self) -> None:
+        """Set storage state to `Declined`"""
         self.state = StorageState.DECLINED
 
-    def ready(self) -> None:
+    def enable(self) -> None:
+        """Set storage state to `Idle` making it ready for connection"""
         self.state = StorageState.IDLE
 
     def expose(self) -> None:
-        """Expose mass storage image over USB"""
+        """Expose mass storage image over USB, sets storage state to `Exposed`"""
 
         if self.state != StorageState.SYNCED:
             return
@@ -70,7 +73,7 @@ class MassStorage:
         print("USB mass storage exposed")
 
     def unexpose(self) -> None:
-        """Unexpose mass storage image over USB."""
+        """Unexpose mass storage image over USB, sets storage state to `Idle`"""
 
         self._stop_module()
         run(
