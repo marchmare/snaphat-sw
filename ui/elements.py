@@ -100,6 +100,59 @@ class BoxFrame(UIElement):
             self.merge(sprite, UI_8x11.sw * x, UI_8x11.sh * y)
 
 
+class MenuList(UIElement):
+    def __init__(
+        self,
+        items: list[str],
+        title: str | None = None,
+        selected: int = 0,
+        frame: bool = True,
+        **kwargs: Unpack[UIElementKwargs],
+    ) -> None:
+        super().__init__(**kwargs)
+        self.items = items
+        self._current = selected
+        self.title = title
+
+        self._frame_offset = 1 if frame else 0
+        self._title_offset = 1 if title else 0
+
+    @property
+    def current(self) -> int:
+        return self._current
+
+    @current.setter
+    def current(self, value: int) -> None:
+        self._current = max(0, min(value, len(self.items) - 1))
+
+    def _resolve_max_width(self) -> int:
+        """Resolve max width of the entire menu list based on stored items"""
+        max_width = 0
+        for item in self.items:
+            if len(item) > max_width:
+                max_width = len(item)
+        return max_width + 2
+
+    def compose(self) -> None:
+        if self._frame_offset:
+            self.merge(BoxFrame(width=self._resolve_max_width() + 2, height=len(self.items) + self._title_offset + 2))
+
+        if self.title:
+            self.merge(
+                TextBlock(text=self.title),
+                x=self._frame_offset * FONT_8x11.sw,
+                y=self._frame_offset * FONT_8x11.sh,
+            )
+
+        for i, item in enumerate(self.items):
+            cursor = "> " if i == self._current else "  "
+            self.merge(
+                TextBlock(text=cursor + item),
+                x=self._frame_offset * FONT_8x11.sw,
+                y=(i + self._title_offset + self._frame_offset) * FONT_8x11.sh,
+            )
+
+
 # Complex UI elements:
 
 
