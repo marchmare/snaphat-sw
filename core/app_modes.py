@@ -100,9 +100,9 @@ class USBPluggedPrompt(AppMode):
     def setup_ui(self) -> None:
         self.ui.add(BatteryIndicator(id="battery_indicator", x_align=AlignX.RIGHT))
 
-        self.ui.add(BoxFrame(height=20, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
-        self.ui.add(TextBlock(text="USB plugged in!", x_align=AlignX.CENTER, y_align=AlignY.CENTER, y=0))
-        self.ui.add(TextBlock(text="Want to share stored files?", x_align=AlignX.CENTER, y_align=AlignY.CENTER, y=11))
+        self.ui.add(BoxFrame(height=10, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
+        self.ui.add(TextBlock(text="USB plugged in!", x_align=AlignX.CENTER, y=66))
+        self.ui.add(TextBlock(text="Want to share stored files?", x_align=AlignX.CENTER, y=88))
 
         self.ui.add(
             MenuList(
@@ -112,8 +112,7 @@ class USBPluggedPrompt(AppMode):
                     MenuListItem(text="Not now", callback=self.cancel),
                 ],
                 x_align=AlignX.CENTER,
-                y_align=AlignY.CENTER,
-                y=22,
+                y=132,
                 frame=False,
                 sound_walk=self.app.sounds.tick,
             )
