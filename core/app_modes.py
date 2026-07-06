@@ -102,7 +102,7 @@ class USBHandler(AppMode):
             self.disconnect()
 
     def prepare_base_frame(self) -> RGBImage:
-        base_frame = EmptyRGBImage(fill=255)
+        base_frame = EmptyRGBImage(fill=171)
         base_frame.dither(self.ditherer, self.app.palettes.current)
 
         return base_frame
@@ -145,6 +145,12 @@ class USBPlugged(USBHandler):
             )
         )
 
+    def prepare_base_frame(self) -> RGBImage:
+        base_frame = EmptyRGBImage(fill=85)
+        base_frame.dither(self.ditherer, self.app.palettes.current)
+
+        return base_frame
+
     def on_click_up(self) -> None:
         """BUTTON UP: navigate to previous menu item"""
 
@@ -173,7 +179,7 @@ class USBPlugged(USBHandler):
 
 
 class USBConnecting(USBHandler):
-    """Animation displaying while mass storage image is being prepared."""
+    """Intermediate screen visible while mass storage image is being prepared."""
 
     def __init__(self, app: App) -> None:
         super().__init__(app)
@@ -186,8 +192,6 @@ class USBConnecting(USBHandler):
         self.ui.add(TextBlock(text="Connecting...", x_align=AlignX.CENTER, y=66))
         self.ui.add(TextBlock(text="Just a minute!", x_align=AlignX.CENTER, y=88))
 
-        self.ui.add(TextBlock(text="...", x_align=AlignX.CENTER, y=132))
-
     def update_state(self) -> None:
         super().update_state()
 
@@ -196,7 +200,7 @@ class USBConnecting(USBHandler):
 
 
 class USBConnected(USBHandler):
-    """Dialog box showing when mass storage is exposed."""
+    """Dialog box showing when mass storage is exposed, allowing user to disconnect."""
 
     def __init__(self, app: App) -> None:
         super().__init__(app)

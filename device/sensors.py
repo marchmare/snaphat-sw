@@ -8,6 +8,7 @@ from time import sleep
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from os import listdir
+from collections import deque
 
 T = TypeVar("T")
 
@@ -127,7 +128,7 @@ class PowerMonitor(SensorBase[PowerState]):
     def __init__(self, interval=1.0) -> None:
         self._i2cdevice = INA219(PowerSettings)
 
-        self._vbus_buffer: list[float] = []  # buffer average calculation to flatten measurements
+        self._vbus_buffer: deque[float] = deque(maxlen=5)  # buffer average calculation to flatten measurements
 
         super().__init__(interval, verbose=True)  # enable threading
 
@@ -156,11 +157,9 @@ class PowerMonitor(SensorBase[PowerState]):
         Uses _vbus_buffer attribute to store the values, number of elements
         in the buffer is defined with buffer_len variable.
         """
-        buffer_len = 5
 
         self._vbus_buffer.append(value)
-        self._vbus_buffer = self._vbus_buffer[-buffer_len:]
-        return sum(self._vbus_buffer) / len(self._vbus_buffer)
+        return sum(self._vbus_buffer) / self._vbus_buffer.maxlen
 
     def _percent(self, vbus: float) -> int:
         """
@@ -175,7 +174,7 @@ class PowerMonitor(SensorBase[PowerState]):
         return int(A * vbus**2 - B * vbus + C)
 
 
-@dataclass
+@dataclass(frozen=True)
 class USBState:
     usb_ready: bool
     suspended: int
@@ -185,11 +184,12 @@ class USBState:
 class USBMonitor(SensorBase[USBState]):
     """USB monitor tracking USB connection events."""
 
-    def __init__(self, interval=1.0) -> None:
+    def __init__(self, interval=0.2) -> None:
         self._usbdevice = listdir("/sys/class/udc")[0]
         super().__init__(interval, verbose=True)  # enable threading
 
         self._state = USBState(False, 0, "not attached")
+        self._state_buffer: deque[USBState] = deque(maxlen=5)  # buffer states for debounce
 
     def _poll_connection_status(self) -> str:
         try:
@@ -215,8 +215,15 @@ class USBMonitor(SensorBase[USBState]):
         connection_status = self._poll_connection_status()
         usb_ready = suspended == 0 and connection_status == "configured"
 
-        return USBState(
+        state = USBState(
             usb_ready=usb_ready,
             suspended=suspended,
             connection_status=connection_status,
         )
+
+        self._state_buffer.append(state)
+
+        if len(set(self._state_buffer)) == 1 and len(self._state_buffer) == self._state_buffer.maxlen:
+            self._state = state
+
+        return self._state
