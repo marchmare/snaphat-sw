@@ -11,7 +11,7 @@ with conversion to RGB565 and basic compositing.
 from __future__ import annotations
 
 from typing import Optional, Protocol, TYPE_CHECKING
-from numpy import uint8, uint16, bool_, ones, zeros, clip, array, where
+from numpy import uint8, uint16, bool_, ones, zeros, clip, array, where, full
 from numpy.typing import NDArray
 from copy import deepcopy
 
@@ -308,14 +308,6 @@ class RGBImage(Image):
 
         return self.to_RGB565().flatten()
 
-
-class CameraFrame(RGBImage):
-    """
-    Image captured from a camera source.
-
-    Inherits from RGBImage, stores image data as NumPy uint8 array of shape (H, W, 3).
-    """
-
     def dither(self, ditherer: "Ditherer", palette: Palette) -> None:
         """
         Apply dithering to the image using a given Ditherer and Palette.
@@ -324,6 +316,27 @@ class CameraFrame(RGBImage):
         """
 
         self.image = ditherer.dither(self.image, palette)
+
+
+class EmptyRGBImage(RGBImage):
+    def __init__(self, width: int = 0, height: int = 0, fill: int = 0) -> None:
+        if width == 0 or height == 0:
+            _w = D_WIDTH
+            _h = D_HEIGHT
+        else:
+            _w = width
+            _h = height
+
+        image = full((_h, _w, 3), fill, dtype=uint8)
+        super().__init__(image)
+
+
+class CameraFrame(RGBImage):
+    """
+    Image captured from a camera source.
+
+    Inherits from RGBImage, stores image data as NumPy uint8 array of shape (H, W, 3).
+    """
 
     def save(self, output_dir: str, orientation: int = 1) -> str | None:
         """

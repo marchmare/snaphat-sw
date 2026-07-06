@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from device.device import Device
 from core.settings import BuzzerSettings
-from core.app_modes import CameraPreview
+from core.app_modes import CameraPreview, USBHandler, USBPlugged
 from core.mass_storage import MassStorage, StorageState
 from core.palette import Palettes
 from sound.assets import Sounds
@@ -60,20 +60,15 @@ class App:
         """Handle USB mass storage connect/disconnect."""
 
         usb_ready = self.device.usb.state.usb_ready
-
-        if usb_ready and self.storage.state == StorageState.IDLE:
-            # detect USB cable plugged and mass storage is not exposed
-            # self.mode = ... <- TODO: write storage input pending state
-            self.storage.update_storage()
-            self.storage.expose()
+        if usb_ready and self.storage.state == StorageState.IDLE and not isinstance(self.mode, USBHandler):
+            #  detect USB cable plugged and mass storage is not exposed
+            self.mode = USBPlugged(self)
 
         if not usb_ready and self.storage.state != StorageState.IDLE:
             # force cleanup if the USB host disconnected unexpectedly,
             # resets `StorageState` so plugging cable again will retrigger the expose prompt
             self.storage.unexpose()
-            self.storage.ready()
-
-        # user disconnect will be handled in the specific app modes
+            self.storage.enable()
 
     def update_state(self) -> None:
         """Handle sensor outputs and other app state logic. Redirect to AppState as each mode handles device/UI state differently."""
