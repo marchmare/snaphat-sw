@@ -173,7 +173,7 @@ class USBPlugged(USBHandler):
 
     def accept(self) -> None:
         """Accept connection callback"""
-        self.app.sounds.ting.play()
+        self.app.sounds.woop.play()
         self.app.mode = USBConnecting(self.app)
         print("Switched to USBConnecting.")
 
@@ -318,10 +318,6 @@ class CameraPreview(AppMode):
 
     def update_state(self) -> None:
         self.ui.battery_indicator.update_state(self.app.device.power.state)
-
-        # if self.app.device.usb.state.usb_ready and not self.app.storage.state == StorageState.DECLINED:
-        #     self.app.mode = USBPluggedPrompt(self.app)
-        #     print("Switched to USBPluggedPrompt.")
 
     def prepare_base_frame(self) -> RGBImage:
         base_frame = self.app.device.camera.capture()

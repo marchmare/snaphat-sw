@@ -63,19 +63,12 @@ class App:
         if usb_ready and self.storage.state == StorageState.IDLE and not isinstance(self.mode, USBHandler):
             #  detect USB cable plugged and mass storage is not exposed
             self.mode = USBPlugged(self)
-        #     self.storage.update_storage()
-        #     self.storage.expose()
 
         if not usb_ready and self.storage.state != StorageState.IDLE:
             # force cleanup if the USB host disconnected unexpectedly,
             # resets `StorageState` so plugging cable again will retrigger the expose prompt
-
             self.storage.unexpose()
             self.storage.enable()
-
-        # user disconnect will be handled in the specific app modes
-
-        ...
 
     def update_state(self) -> None:
         """Handle sensor outputs and other app state logic. Redirect to AppState as each mode handles device/UI state differently."""

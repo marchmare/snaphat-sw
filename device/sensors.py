@@ -110,7 +110,7 @@ class MotionSensor(SensorBase[MotionState]):
         return MotionState.HORIZONTAL
 
 
-@dataclass
+@dataclass(frozen=True)
 class PowerState:
     voltage: float
     current: float
