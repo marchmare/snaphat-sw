@@ -289,6 +289,7 @@ class StartMenu(AppMode):
 
     def on_click_b(self) -> None:
         """BUTTON B: Return to CameraPreview."""
+
         self.app.sounds.woop2.play()
         self.app.mode = CameraPreview(self.app)
 
@@ -305,15 +306,13 @@ class StartMenu(AppMode):
     def goto_gallery(self) -> None:
         """Callback: go to Gallery app mode."""
 
-        self.app.sounds.woop.play_threaded()
         self.app.mode = Gallery(self.app)
         print("Switched to Gallery.")
 
     def goto_settings(self) -> None:
         """Callback: go to Settings app mode."""
 
-        self.app.sounds.woop.play_threaded()
-        self.app.mode = Gallery(self.app)
+        self.app.mode = Settings(self.app)
         print("Switched to Settings.")
 
     def goto_about(self) -> None:
@@ -333,7 +332,7 @@ class SettingScreen:
     def resolve_saved(self) -> int:
         if not self.setting_group:
             return
-        current_value = self.setting_group.getattr(self.setting)
+        current_value = getattr(self.setting_group, self.setting)
         return list(self.items_mapping.keys()).index(current_value)
 
     def save(self, index) -> None: ...
@@ -343,31 +342,24 @@ class Settings(AppMode):
     """Settings mode. Displays screens for adjusting multiple runtime settings"""
 
     def __init__(self, app: App) -> None:
-        super().__init__(app)
-
-        from core.ditherer import Ditherer
-
-        self.ditherer = Ditherer()
-        self.camera_image: CameraFrame = None
-
         self.settings = [
             SettingScreen(
-                core_setting=AppSettings,
+                setting_group=AppSettings,
                 setting="sound",
                 title="Sound settings",
                 items_mapping={
-                    "True": MenuListItem(text="Enable", callback=self.save_setting),
-                    "False": MenuListItem(text="Disable", callback=self.save_setting),
+                    True: MenuListItem(text="Enable", callback=self.save_setting),
+                    False: MenuListItem(text="Disable", callback=self.save_setting),
                 },
             ),
             SettingScreen(
-                core_setting=DithererSettings,
+                setting_group=DithererSettings,
                 setting="bayer_size",
                 title="Bayer threshold map size",
                 items_mapping={size: MenuListItem(text=str(size), callback=self.save_setting) for size in [2, 4, 8]},
             ),
             SettingScreen(
-                core_setting=DithererSettings,
+                setting_group=DithererSettings,
                 setting="colors",
                 title="Bayer color levels",
                 items_mapping={
@@ -375,6 +367,14 @@ class Settings(AppMode):
                 },
             ),
         ]
+
+        super().__init__(app)
+
+        from core.ditherer import Ditherer
+
+        self.ditherer = Ditherer()
+        self.camera_image: CameraFrame = None
+
         self.current = 0
 
     def save_setting(self) -> None: ...
@@ -389,18 +389,14 @@ class Settings(AppMode):
 
     def setup_ui(self) -> None:
         self.ui.add(BoxFrame(height=10, width=30, x_align=AlignX.CENTER, y_align=AlignY.CENTER))
-        self.ui.add(TextBlock(text="USB plugged in!", x_align=AlignX.CENTER, y=66))
-        self.ui.add(TextBlock(text="Want to share stored files?", x_align=AlignX.CENTER, y=88))
+        self.ui.add(TextBlock(text=self.settings[0].title, x_align=AlignX.CENTER, y=66))
 
         self.ui.add(
             MenuList(
                 id="menu",
-                items=[
-                    MenuListItem(text="Let's go!", callback=self.accept),
-                    MenuListItem(text="Not now", callback=self.cancel),
-                ],
+                items=list(self.settings[0].items_mapping.values()),
                 x_align=AlignX.CENTER,
-                y=132,
+                y=121,
                 frame=False,
                 sound_walk=self.app.sounds.tick,
             )
@@ -428,15 +424,10 @@ class Settings(AppMode):
         self.ui.menu.selected.callback()
 
     def on_click_b(self) -> None:
-        """BUTTON B: cancel connection"""
+        """BUTTON B: Return to CameraPreview."""
 
-        self.cancel()
-
-    def accept(self) -> None:
-        """Accept connection callback"""
-        self.app.sounds.woop.play()
-        self.app.mode = USBConnecting(self.app)
-        print("Switched to USBConnecting.")
+        self.app.sounds.woop2.play()
+        self.app.mode = CameraPreview(self.app)
 
 
 class Gallery(AppMode):
