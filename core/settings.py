@@ -8,6 +8,7 @@ class AppSettings:
     mass_storage_size: int = 1024 * 1024 * 1024
     mass_storage_path: str = "/storage.bin"
     mass_storage_mount_path: str = "/mnt/storage"
+    sound: bool = True
 
 
 @dataclass(frozen=True)
