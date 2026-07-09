@@ -231,6 +231,95 @@ class USBConnected(USBHandler):
 
         self.ui.menu.selected.callback()
 
+    def on_click_b(self) -> None:
+        """BUTTON B: switch AppState to CameraPreview"""
+
+        self.app.sounds.woop2.play()
+        self.app.mode = CameraPreview(self.app)
+        print("Switched to CameraPreview.")
+
+
+class StartMenu(AppMode):
+    """Menu overlay accessible from CameraPreview mode, provides access to other modes."""
+
+    def __init__(self, app: App) -> None:
+        super().__init__(app)
+
+        from core.ditherer import Ditherer
+
+        self.ditherer = Ditherer()
+        self.camera_image: CameraFrame = None
+
+    def setup_ui(self) -> None:
+        self.ui.add(NotificationTextBlock(id=f"popup", x_align=AlignX.RIGHT, y_align=AlignY.BOTTOM))
+        self.ui.add(BatteryIndicator(id="battery_indicator", x_align=AlignX.RIGHT))
+
+        items = [
+            MenuListItem(text="View photos", label="gallery", callback=self.goto_gallery),
+            MenuListItem(text="Settings", label="settings", callback=self.goto_settings),
+            MenuListItem(text="About", label="about", callback=self.goto_about),
+        ]
+        self.ui.add(
+            MenuList(
+                id="menu",
+                items=items,
+                x_align=AlignX.RIGHT,
+                y_align=AlignY.CENTER,
+                sound_walk=self.app.sounds.tick,
+            )
+        )
+
+    def update_state(self) -> None:
+        self.ui.battery_indicator.update_state(self.app.device.power.state)
+
+    def prepare_base_frame(self) -> RGBImage:
+        base_frame = self.app.device.camera.capture()
+        base_frame.dither(self.ditherer, self.app.palettes.current)
+
+        self.camera_image = base_frame.copy()
+
+        return base_frame
+
+    def on_click_a(self) -> None:
+        """BUTTON A: Accept currently selected menu item."""
+
+        self.app.sounds.woop.play()
+        self.ui.menu.selected.callback()
+
+    def on_click_b(self) -> None:
+        """BUTTON B: Return to CameraPreview."""
+        self.app.sounds.woop2.play()
+        self.app.mode = CameraPreview(self.app)
+
+    def on_click_up(self) -> None:
+        """BUTTON UP: navigate to previous menu item"""
+
+        self.ui.menu.current -= 1
+
+    def on_click_down(self) -> None:
+        """BUTTON DOWN: navigate to next menu item"""
+
+        self.ui.menu.current += 1
+
+    def goto_gallery(self) -> None:
+        """Callback: go to Gallery app mode."""
+
+        self.app.sounds.woop.play_threaded()
+        self.app.mode = Gallery(self.app)
+        print("Switched to Gallery.")
+
+    def goto_settings(self) -> None:
+        """Callback: go to Settings app mode."""
+
+        self.app.sounds.woop.play_threaded()
+        self.app.mode = Gallery(self.app)
+        print("Switched to Settings.")
+
+    def goto_about(self) -> None:
+        """Callback: go to About app mode."""
+
+        ...
+
 
 class Gallery(AppMode):
     """Photo gallery mode. Displays photos saved on SD card."""
@@ -330,7 +419,7 @@ class CameraPreview(AppMode):
     def on_click_a(self) -> None:
         """BUTTON A: Toggle color palette."""
 
-        self.app.sounds.ting.play_threaded()
+        self.app.sounds.tick.play_threaded()
         self.app.palettes.next()
 
         self.ui.popup.text = f"Color palette: {self.app.palettes.current.id}"
@@ -391,8 +480,8 @@ class CameraPreview(AppMode):
         """BUTTON MENU: switch AppState to Gallery"""
 
         self.app.sounds.woop.play_threaded()
-        self.app.mode = Gallery(self.app)
-        print("Switched to Gallery.")
+        self.app.mode = StartMenu(self.app)
+        print("Switched to StartMenu.")
 
     def adjust_setting(self, value: int, change: callable, range: tuple[int, int], label: str) -> int:
         """Resolve adjusting a setting based on initial value, passed adjusting function, setting allowed range and label for displaying messages."""
